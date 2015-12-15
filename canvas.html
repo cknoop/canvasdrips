@@ -4,18 +4,19 @@
     <meta charset="utf-8">
     <title>canvas drips</title>
     <script src="jquery-1.11.1.min.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+    <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>-->
     <script src="easing.js"></script>
-    <script src="http://kirupa.googlecode.com/svn/trunk/easing.js"></script>
+    <!--<script src="http://kirupa.googlecode.com/svn/trunk/easing.js"></script>-->
 </head>
 <body>
 
 <canvas id="myCanvas">Fallback</canvas>
 
 <style>
+
 * {
-  margin:0;
-  padding:0;
+    margin:0;
+    padding:0;
 }
 
 canvas{ 
@@ -27,21 +28,28 @@ canvas{
 
 <script>
 
-$(function(){
+
+
+
+// initialize with color or in grey
+// initialize with other params
+// round to 2 or 3 digits should a be (prototype) method
+
+$(function() {
     lab();
 });
 
-var canvas = null;
-var ctx = null;
-var width = 0;
-var height = 0;
+var canvas = null,
+    ctx = null,
+    width = 0,
+    height = 0;
 
 function lab() {
     canvas = document.getElementById('myCanvas');
     ctx = canvas.getContext('2d');
     width = window.innerWidth;
     height = window.innerHeight;
-    ctx.canvas.width  = width;
+    ctx.canvas.width = width;
     ctx.canvas.height = height;
     animate();
 }
@@ -55,11 +63,11 @@ $(window).resize(function() {
     canvas.height = height;
 });
 
-var minSize = 1;
-var maxSize = 25;   // width / height
-var drips = [];
-var minWait = 1000;
-var lastTime = +new Date();
+var minSize = 1,
+    maxSize = 25, // width / height
+    drips = [],
+    minWait = 1000,
+    lastTime = +new Date();
 
 function Drip(x, y, size, opacity, color, speed, end, count, easingVal) {
     this.x = x;
@@ -76,29 +84,40 @@ function Drip(x, y, size, opacity, color, speed, end, count, easingVal) {
 function getRandomColor() {
     var letters = '0123456789ABCDEF'.split('');
     var color = '#';
-    for (var i = 0; i < 6; i++ ) {
+    for (var i = 0; i < 6; i++) {
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
 }
 
 Drip.prototype.update = function() {
-    if (this.y < this.end) { 
+    if (this.y < this.end) {
         //this.y += this.speed - 0.1;   // works well without easing
         // this.easingValue = easeOutSine(this.count, this.y, this.end, 2000);
-        this.easingValue = easeOutSine(this.count, 0, this.end, 500);    //this.speed
+        this.easingValue = easeOutSine(this.count, 0, this.end, 500); //this.speed
         this.y = this.easingValue;
-        this.count ++;
+        this.count++;
     } else {
         this.y = this.y;
         // decrease opacity 
+        if (this.opacity > 0.01) {
+            // 3 digits
+            this.opacity = Math.round((this.opacity - 0.001) * 1000) / 1000;
+        } else {
+            // prevent flicker effect
+            setTimeout(function() {
+                drips.remove(this)
+            }, 5000);
+        }
     }
 };
 
-Drip.prototype.render = function(){
+
+
+Drip.prototype.render = function() {
     ctx.beginPath();
-    ctx.lineWidth=this.size;
-    ctx.lineCap="round";
+    ctx.lineWidth = this.size;
+    ctx.lineCap = "round";
     ctx.moveTo(this.x, -10);
     ctx.lineTo(this.x, this.y);
     ctx.strokeStyle = this.color;
@@ -106,26 +125,30 @@ Drip.prototype.render = function(){
     ctx.stroke();
 };
 
+
 //draw the screen
 function draw() {
-    if(+new Date() > lastTime + minWait){
+    if (+new Date() > lastTime + minWait) {
         lastTime = +new Date();
         var x = getRandomInt(-15, width + 15),
-            y = -10, 
+            y = -10,
             size = getRandomInt(minSize, maxSize),
-            opacity = getRandom(0.2, 1), //.toFixed(2),
+            opacity = getRandom(0.2, 1), //.toFixed(2),     0.80, //
             //color = 'white',
             //color ='rgb('+(Math.floor(Math.random()*122))+','+(Math.floor(Math.random()*1222))+','+(Math.floor(Math.random()*122))+')';
             color = getRandomColor();
             speed = getRandomInt(200, 2000),
-            end = getRandomInt(50, height +50),
+            end = getRandomInt(50, height + 50),
             count = 1,
             easingVal = 0;
+
         drips.push(new Drip(x, y, size, opacity, color, speed, end, count, easingVal));
-        // opacity = 0, remove
-        if(drips.length > 500) {
-            drips.shift();
-        }
+
+        // opacity = 0, remove // ???
+        // if(drips.length > 15) {
+        //     drips.shift();
+        // }
+
     }
     drips.forEach(function(e) {
         e.update();
@@ -136,36 +159,57 @@ function draw() {
 
 // @return [float] a random number between min and max
 function getRandom(min, max) {
-  return Math.random() * (max - min) + min;
+    return Math.round((Math.random() * (max - min) + min) * 100) / 100;
 }
- 
+
 // @return [integer] a random int between min and max
 function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 function animate() {
-    ctx.clearRect(0,0,canvas.width, canvas.height); 
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     requestAnimationFrame(animate);
     draw();
 }
+
+
+// function roundToTwo(value) {
+//     return(Math.round(value * 100) / 100);
+// }
+
 
 /**
  * Provides requestAnimationFrame in a cross browser way.
  * http://paulirish.com/
  */
 if (!window.requestAnimationFrame) {
-    window.requestAnimationFrame = ( function() {
-          return  window.requestAnimationFrame       ||
-                  window.webkitRequestAnimationFrame ||
-                  window.mozRequestAnimationFrame    ||
-                  window.oRequestAnimationFrame      ||
-                  window.msRequestAnimationFrame     ||
-                  function( callback ){
-                    window.setTimeout(callback, 1000 / 60);
-                  };
-        })();
+    window.requestAnimationFrame = (function() {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(callback) {
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
 }
+
+
+Array.prototype.remove = function() {
+    var what, a = arguments,
+        L = a.length,
+        ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
+
 
 </script>
 </body>
