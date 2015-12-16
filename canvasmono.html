@@ -1,0 +1,103 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+  body, html {overflow: hidden; margin: 0px;}
+  canvas{background:#ccc;}
+</style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+
+<script>
+
+
+
+var width = window.innerWidth;
+var height = window.innerHeight;
+var canvas = document.getElementById("myCanvas");
+var ctx = canvas.getContext('2d');
+canvas.width = width;
+canvas.height = height;
+
+var reqAnimFrame = window.mozRequestAnimationFrame  || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || window.oRequestAnimationFrame;
+var minSize = 1;
+var maxSize = 25; //12
+
+var drips = [];
+var minWait = 1000;
+var lastTime = +new Date();
+
+function Drip(x, y, size, opacity, color, speed, end) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.opacity = opacity;
+    this.color = color;
+    this.speed = speed;
+    this.end = end;
+}
+
+Drip.prototype.update = function() {
+    // make drips slower at the time
+    // before stops make extra slow
+    if (this.y < this.end) {   
+        this.y += this.speed - 0.1;
+    } else {
+        this.y = this.y;   
+    }
+};
+
+Drip.prototype.render = function(){
+    ctx.beginPath();
+    ctx.lineWidth=this.size;
+    ctx.lineCap="round";
+    ctx.moveTo(this.x, -10);
+    ctx.lineTo(this.x, this.y);
+    ctx.strokeStyle = this.color;
+    ctx.globalAlpha = this.opacity;
+    ctx.stroke();
+};
+
+//draw the screen
+function draw() {
+    if(+new Date() > lastTime + minWait){
+        lastTime = +new Date();
+        drips.push(new Drip(
+            Math.random() * width - 10,
+            -10,
+            Math.random() * (maxSize - minSize) + minSize,
+            0.2 + Math.random(),
+            //randomIntFromInterval(0.2, 1),
+            'white',
+            //Math.random() * height + 40,
+            0.2 + Math.random(),
+            randomIntFromInterval(height+height, height-height)
+            //height * 10 + Math.random() * 5000
+          ));
+    }
+    drips.forEach(function(e){
+        e.update();
+        e.render();
+    });
+};
+
+function randomIntFromInterval(min,max) {
+    return Math.floor(Math.random()*(max-min+1)+min);
+}
+
+function animate() {
+    ctx.clearRect(0,0,canvas.width, canvas.height); 
+    reqAnimFrame(animate);
+    draw();
+}
+
+animate();
+
+//endPosition     = Math.random() * height + 40,
+//durationFall     = height * 10 + Math.random() * 5000;
+//var farbe ='rgb('+(Math.floor(Math.random()*122))+','+(Math.floor(Math.random()*1222))+','+(Math.floor(Math.random()*122))+')';
+</script>
+</body>
+</html>      
