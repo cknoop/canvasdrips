@@ -39,8 +39,10 @@
                 ctx2 = canvas2.getContext('2d'),
                 height = 0;
 
+
+            // heres a bug
             // resize the canvas to fill browser window dynamically
-            window.addEventListener('resize', resizeCanvas, false);
+            //window.addEventListener('resize', resizeCanvas, false);
 
             function resizeCanvas() {
                 canvas1.width = 310 //window.innerWidth;
