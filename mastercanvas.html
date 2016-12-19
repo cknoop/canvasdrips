@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+  <meta charset="utf-8">
+  <title>canvas drips ... </title>
+  <meta name="description" content="">
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+  <meta http-equiv="cleartype" content="on">
+
+  <!--<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="theme-color" content="#ffffff">
+
+  <script src="theme/js/vendor/modernizr-2.7.1.min.js"></script>
+  -->
+
+	<style>
+    	/*body, html {overflow: hidden; margin: 0px;}
+    	canvas{background:#ccc;}*/
+		* {
+		    margin:0;
+		    padding:0;
+		}
+		canvas{ 
+		    position:absolute;
+            z-index: 0;
+		    /*background:black;*/
+		}
+        #content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .button {
+            margin-top: 10%;
+            padding: 4px 10px;
+            border-radius: 0;
+            border: 1px solid #ccc;
+            background: #ccc;
+            color: white;
+            font-size: 140%;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #ddd;
+            border-color: #ddd;
+            color: #666;
+        }
+        .button:focus {
+            outline: none;
+        }
+    </style>
+
+</head>
+<body>
+
+	<canvas id="myCanvas"></canvas>
+
+     <!-- <div id="content">
+         <button class="button" id="refresh">refresh</button>         
+     </div> -->
+
+    <script src="jquery-1.11.1.min.js"></script>
+    <!--<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>-->
+    <script src="easing.js"></script>
+    <!--<script src="http://kirupa.googlecode.com/svn/trunk/easing.js"></script>-->
+<script>
+
+
+$(document).ready(function () {
+
+
+
+// $('#refresh').on('click', function(){
+
+//     colorStr    = 'random';
+//     canvasBg    = '#666'
+//     // maxDrips    = 50;
+//     drips       = [];
+//     lastTime    = +new Date();
+//     allDone     = 0;
+
+//     lab();
+// });
+
+
+// round to 2 or 3 digits should a be (prototype) method
+// opacity
+
+// settings
+var minSize 	= 1,
+    maxSize 	= 25,
+    minWait 	= 1000,
+    maxDrips 	= 15,
+    colorStr 	= '#fff',     //'random',		// color random, #fff, white, ...
+    canvasBg 	= '#eee';     //'black';
+
+// globals
+var canvas 		= null,
+    ctx 		= null,
+    width 		= 0,
+    height 		= 0,
+    drips 		= [],
+    lastTime 	= +new Date(),
+    allDone		= 0;
+
+
+// $(function() {
+    lab();
+// });
+
+
+function lab() {
+    canvas = document.getElementById('myCanvas');
+    canvas.style.background = canvasBg;
+    ctx = canvas.getContext('2d');
+    width = window.innerWidth;
+    height = window.innerHeight;
+    ctx.canvas.width = width;
+    ctx.canvas.height = height;
+    animate();
+}
+
+
+$(window).resize(function() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+});
+
+
+function Drip(x, y, size, opacity, color, speed, end, count, easingVal) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.opacity = opacity;
+    this.color = color;
+    this.speed = speed;
+    this.end = end;
+    this.count = count;
+    this.easingVal = easingVal;
+    this.hasStopped = false;
+}
+
+
+
+Drip.prototype.update = function() {
+    if (this.y < this.end) {
+        //this.y += this.speed - 0.1;   // works well without easing
+        this.easingValue = easeOutSine(this.count, 0, this.end, 500); //this.speed
+        this.y = this.easingValue;
+        this.count++;
+    } else {
+        this.y = this.y;
+        this.hasStopped = true;
+    }
+};
+
+
+
+Drip.prototype.render = function() {
+    ctx.beginPath();
+    ctx.lineWidth = this.size;
+    ctx.lineCap = 'round';
+    ctx.moveTo(this.x, -10);
+    ctx.lineTo(this.x, this.y);
+    ctx.strokeStyle = this.color;
+    ctx.globalAlpha = this.opacity;
+    ctx.stroke();
+};
+
+
+//draw the screen
+function draw() {
+
+    if (+new Date() > lastTime + minWait) {
+        lastTime = +new Date();
+        var x = getRandomInt(-15, width + 15),
+            y = -10,
+            size = getRandomInt(minSize, maxSize),
+            // todo: setting
+            opacity = getRandom(0.2, 1), //.toFixed(2),     0.80, //
+            // 'rgb('+(Math.floor(Math.random()*122))+','+(Math.floor(Math.random()*1222))+','+(Math.floor(Math.random()*122))+')';
+            color = (colorStr === 'random') ? getRandomColor() : colorStr;
+            speed = getRandomInt(200, 2000),
+            end = getRandomInt(50, height + 50),
+            count = 1,
+            easingVal = 0;
+
+        // only push if allowed
+        if(drips.length < maxDrips) {
+            drips.push(new Drip(x, y, size, opacity, color, speed, end, count, easingVal));
+        }
+
+    }
+    drips.forEach(function(e) {
+        e.update();
+        e.render();
+    });
+};
+
+
+
+function animate() {
+
+    if(allDone){
+        return;
+    }
+
+    var check = false;
+
+    if(drips.length >= maxDrips) {
+        drips.forEach(function(drip){
+            if(!drip.hasStopped) {
+            	check = true;
+            }
+        });
+        
+
+        if(!check) {
+            allDone = true;
+            return;
+        }
+    }
+
+    console.log('animate');
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    requestAnimationFrame(animate);
+    draw();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// @return [float] a random number between min and max
+function getRandom(min, max) {
+    return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+}
+
+// @return [integer] a random int between min and max
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+// function roundToTwo(value) {
+//     return(Math.round(value * 100) / 100);
+// }
+
+function getRandomColor() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+
+/**
+ * Provides requestAnimationFrame in a cross browser way.
+ * http://paulirish.com/
+ */
+if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = (function() {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function(callback) {
+                window.setTimeout(callback, 1000 / 60);
+            };
+    })();
+}
+
+
+
+// https://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+
+// (function() {
+//     var lastTime = 0;
+//     var vendors = ['webkit', 'moz'];
+//     for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+//         window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+//         window.cancelAnimationFrame =
+//           window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+//     }
+
+//     if (!window.requestAnimationFrame)
+//         window.requestAnimationFrame = function(callback, element) {
+//             var currTime = new Date().getTime();
+//             var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+//             var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+//               timeToCall);
+//             lastTime = currTime + timeToCall;
+//             return id;
+//         };
+
+//     if (!window.cancelAnimationFrame)
+//         window.cancelAnimationFrame = function(id) {
+//             clearTimeout(id);
+//         };
+// }());
+
+
+// window.requestAnimationFrame(function(/* time */ time){
+//   // time ~= +new Date // the unix time
+// });
+
+
+	});
+</script>
+
+
+</body>
+</html>
+
+
+
+
